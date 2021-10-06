@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"time"
 
 	"gorm.io/driver/postgres"
 	"gorm.io/driver/sqlite"
@@ -19,10 +20,14 @@ type Dao interface {
 	AddApp(name string) error
 	GetApp(name string) (*AppDro, error)
 	DelApp(name string) error
-	DisableCodes(app string, email string) error
-	DisableTokens(app string, dev string) error
+	DisableDevCodes(app string, dev string) error
+	DisableEmailCodes(app string, email string) error
+	DisableDevTokens(app string, dev string) error
+	DisableEmailTokens(app string, email string) error
 	AddCode(dro CodeDro) error
 	AddToken(dro TokenDro) error
+	GetCode(code string, app string, dev string, email string) (*CodeDro, error)
+	GetToken(token string, app string, dev string, email string) (*TokenDro, error)
 }
 
 func dialector(args Args) (gorm.Dialector, error) {
@@ -94,7 +99,16 @@ func (dso *daoDso) DelApp(name string) error {
 	return result.Error
 }
 
-func (dso *daoDso) DisableCodes(app string, email string) error {
+func (dso *daoDso) DisableDevCodes(app string, dev string) error {
+	result := dso.db.Model(&CodeDro{}).
+		Where("app = ?", app).
+		Where("dev = ?", dev).
+		Where("disabled = ?", false).
+		Update("disabled", true)
+	return result.Error
+}
+
+func (dso *daoDso) DisableEmailCodes(app string, email string) error {
 	result := dso.db.Model(&CodeDro{}).
 		Where("app = ?", app).
 		Where("email = ?", email).
@@ -103,10 +117,19 @@ func (dso *daoDso) DisableCodes(app string, email string) error {
 	return result.Error
 }
 
-func (dso *daoDso) DisableTokens(app string, dev string) error {
+func (dso *daoDso) DisableDevTokens(app string, dev string) error {
 	result := dso.db.Model(&TokenDro{}).
 		Where("app = ?", app).
 		Where("dev = ?", dev).
+		Where("disabled = ?", false).
+		Update("disabled", true)
+	return result.Error
+}
+
+func (dso *daoDso) DisableEmailTokens(app string, email string) error {
+	result := dso.db.Model(&TokenDro{}).
+		Where("app = ?", app).
+		Where("email = ?", email).
 		Where("disabled = ?", false).
 		Update("disabled", true)
 	return result.Error
@@ -117,7 +140,32 @@ func (dso *daoDso) AddCode(dro CodeDro) error {
 	return result.Error
 }
 
+func (dso *daoDso) GetCode(code string, app string, dev string, email string) (*CodeDro, error) {
+	dro := &CodeDro{}
+	result := dso.db.
+		Where("code = ?", code).
+		Where("app = ?", app).
+		Where("dev = ?", dev).
+		Where("email = ?", email).
+		Where("disabled = ?", false).
+		Where("expires > ?", time.Now()).
+		First(dro)
+	return dro, result.Error
+}
+
 func (dso *daoDso) AddToken(dro TokenDro) error {
 	result := dso.db.Create(dro)
 	return result.Error
+}
+
+func (dso *daoDso) GetToken(token string, app string, dev string, email string) (*TokenDro, error) {
+	dro := &TokenDro{}
+	result := dso.db.
+		Where("token = ?", token).
+		Where("app = ?", app).
+		Where("dev = ?", dev).
+		Where("email = ?", email).
+		Where("disabled = ?", false).
+		First(dro)
+	return dro, result.Error
 }

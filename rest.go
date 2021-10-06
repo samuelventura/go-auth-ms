@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 )
 
 func rest(args Args) (func(), error) {
@@ -37,6 +38,11 @@ func rest(args Args) (func(), error) {
 			c.JSON(400, gin.H{"error": err.Error()})
 			return
 		}
+		devrt, err := header(c.Request, "Auth-DevRt")
+		if err != nil {
+			c.JSON(400, gin.H{"error": err.Error()})
+			return
+		}
 		email, err := header(c.Request, "Auth-Email")
 		if err != nil {
 			c.JSON(400, gin.H{"error": err.Error()})
@@ -47,7 +53,7 @@ func rest(args Args) (func(), error) {
 			c.JSON(400, gin.H{"error": err.Error()})
 			return
 		}
-		err = dao.DisableCodes(app, email)
+		err = dao.DisableEmailCodes(app, email)
 		if err != nil {
 			c.JSON(400, gin.H{"error": err.Error()})
 			return
@@ -58,9 +64,156 @@ func rest(args Args) (func(), error) {
 		dro.Expires = time.Now().Add(5 * time.Minute)
 		dro.App = app
 		dro.Dev = dev
+		dro.DevRt = devrt
 		dro.Email = email
 		dao.AddCode(dro)
-		c.JSON(200, gin.H{"code": dro.Code})
+		c.JSON(200, gin.H{"app": app, "dev": dev, "email": email, "code": dro.Code})
+	})
+	rapi.POST("/login", func(c *gin.Context) {
+		app, err := header(c.Request, "Auth-App")
+		if err != nil {
+			c.JSON(400, gin.H{"error": err.Error()})
+			return
+		}
+		dev, err := header(c.Request, "Auth-Dev")
+		if err != nil {
+			c.JSON(400, gin.H{"error": err.Error()})
+			return
+		}
+		devrt, err := header(c.Request, "Auth-DevRt")
+		if err != nil {
+			c.JSON(400, gin.H{"error": err.Error()})
+			return
+		}
+		email, err := header(c.Request, "Auth-Email")
+		if err != nil {
+			c.JSON(400, gin.H{"error": err.Error()})
+			return
+		}
+		code, err := header(c.Request, "Auth-Code")
+		if err != nil {
+			c.JSON(400, gin.H{"error": err.Error()})
+			return
+		}
+		_, err = dao.GetApp(app)
+		if err != nil {
+			c.JSON(400, gin.H{"error": err.Error()})
+			return
+		}
+		_, err = dao.GetCode(code, app, dev, email)
+		if err != nil {
+			c.JSON(400, gin.H{"error": err.Error()})
+			return
+		}
+		err = dao.DisableEmailCodes(app, email)
+		if err != nil {
+			c.JSON(400, gin.H{"error": err.Error()})
+			return
+		}
+		err = dao.DisableDevTokens(app, dev)
+		if err != nil {
+			c.JSON(400, gin.H{"error": err.Error()})
+			return
+		}
+		dro := TokenDro{}
+		dro.Token = uuid.NewString()
+		dro.Created = time.Now()
+		dro.App = app
+		dro.Dev = dev
+		dro.DevRt = devrt
+		dro.Email = email
+		dao.AddToken(dro)
+		c.JSON(200, gin.H{"app": app, "dev": dev, "email": email, "token": dro.Token})
+	})
+	rapi.POST("/token", func(c *gin.Context) {
+		app, err := header(c.Request, "Auth-App")
+		if err != nil {
+			c.JSON(400, gin.H{"error": err.Error()})
+			return
+		}
+		dev, err := header(c.Request, "Auth-Dev")
+		if err != nil {
+			c.JSON(400, gin.H{"error": err.Error()})
+			return
+		}
+		email, err := header(c.Request, "Auth-Email")
+		if err != nil {
+			c.JSON(400, gin.H{"error": err.Error()})
+			return
+		}
+		token, err := header(c.Request, "Auth-Token")
+		if err != nil {
+			c.JSON(400, gin.H{"error": err.Error()})
+			return
+		}
+		_, err = dao.GetApp(app)
+		if err != nil {
+			c.JSON(400, gin.H{"error": err.Error()})
+			return
+		}
+		dro, err := dao.GetToken(token, app, dev, email)
+		if err != nil {
+			c.JSON(400, gin.H{"error": err.Error()})
+			return
+		}
+		c.JSON(200, gin.H{"app": app, "dev": dev, "email": email, "token": dro.Token,
+			"created": dro.Created, "runtime": dro.DevRt})
+	})
+	rapi.POST("/logout/dev", func(c *gin.Context) {
+		app, err := header(c.Request, "Auth-App")
+		if err != nil {
+			c.JSON(400, gin.H{"error": err.Error()})
+			return
+		}
+		dev, err := header(c.Request, "Auth-Dev")
+		if err != nil {
+			c.JSON(400, gin.H{"error": err.Error()})
+			return
+		}
+		_, err = dao.GetApp(app)
+		if err != nil {
+			c.JSON(400, gin.H{"error": err.Error()})
+			return
+		}
+		err = dao.DisableDevTokens(app, dev)
+		if err != nil {
+			c.JSON(400, gin.H{"error": err.Error()})
+			return
+		}
+		err = dao.DisableDevCodes(app, dev)
+		if err != nil {
+			c.JSON(400, gin.H{"error": err.Error()})
+			return
+		}
+		c.JSON(200, gin.H{"app": app, "dev": dev})
+	})
+	rapi.POST("/logout/email", func(c *gin.Context) {
+		app, err := header(c.Request, "Auth-App")
+		if err != nil {
+			c.JSON(400, gin.H{"error": err.Error()})
+			return
+		}
+		email, err := header(c.Request, "Auth-Email")
+		if err != nil {
+			c.JSON(400, gin.H{"error": err.Error()})
+			return
+		}
+		_, err = dao.GetApp(app)
+		if err != nil {
+			c.JSON(400, gin.H{"error": err.Error()})
+			return
+		}
+		err = dao.DisableEmailTokens(app, email)
+		if err != nil {
+			c.JSON(400, gin.H{"error": err.Error()})
+			return
+		}
+		err = dao.DisableEmailCodes(app, email)
+		if err != nil {
+			c.JSON(400, gin.H{"error": err.Error()})
+			return
+		}
+		c.JSON(200, gin.H{"app": app, "email": email})
 	})
 	rapi.GET("/app/:name", func(c *gin.Context) {
 		name := c.Param("name")

@@ -17,25 +17,28 @@ curl -X GET http://127.0.0.1:31651/api/app
 #post app+dev+email to receive email with code
 curl -X POST http://127.0.0.1:31651/api/access \
   -H "Auth-App: appName" \
-  -H "Auth-Dev: devID" \
+  -H "Auth-Dev: devId" \
+  -H "Auth-DevRt: devRt" \
   -H "Auth-Email: user@domain.tld"
 #post app+dev+code to be granted a token
 curl -X POST http://127.0.0.1:31651/api/login \
   -H "Auth-App: appName" \
-  -H "Auth-Dev: devID" \
-  -H "Auth-Email: user@domain.tld"
-  -H "Auth-Code: 012345"
+  -H "Auth-Dev: devId" \
+  -H "Auth-DevRt: devRt" \
+  -H "Auth-Email: user@domain.tld" \
+  -H "Auth-Code: 083430"
 #post app+dev+token to retrieve token status/email (server side)
 curl -X POST http://127.0.0.1:31651/api/token \
   -H "Auth-App: appName" \
-  -H "Auth-Dev: devID" \
-  -H "Auth-Token: k8D3jY"
+  -H "Auth-Dev: devId" \
+  -H "Auth-Email: user@domain.tld" \
+  -H "Auth-Token: d0d08a5a-0fd7-47a1-ba11-14776eec3e86"
 #post app+dev to disable all codes/tokens for that dev
-curl -X POST http://127.0.0.1:31651/api/logout \
+curl -X POST http://127.0.0.1:31651/api/logout/dev \
   -H "Auth-App: appName" \
-  -H "Auth-Dev: devID"
+  -H "Auth-Dev: devId"
 #post app+email to disable all codes/tokens for any dev
-curl -X POST http://127.0.0.1:31651/api/logout \
+curl -X POST http://127.0.0.1:31651/api/logout/email \
   -H "Auth-App: appName" \
   -H "Auth-Email: user@domain.tld"
 ```

@@ -4,6 +4,7 @@ go 1.17
 
 require (
 	github.com/gin-gonic/gin v1.7.4
+	github.com/google/uuid v1.3.0
 	github.com/kardianos/service v1.2.0
 	gorm.io/driver/postgres v1.1.2
 	gorm.io/driver/sqlite v1.1.5
