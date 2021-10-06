@@ -19,6 +19,10 @@ type Dao interface {
 	AddApp(name string) error
 	GetApp(name string) (*AppDro, error)
 	DelApp(name string) error
+	DisableCodes(app string, email string) error
+	DisableTokens(app string, dev string) error
+	AddCode(dro CodeDro) error
+	AddToken(dro TokenDro) error
 }
 
 func dialector(args Args) (gorm.Dialector, error) {
@@ -44,7 +48,7 @@ func NewDao(args Args) (Dao, error) {
 	if err != nil {
 		return nil, err
 	}
-	err = db.AutoMigrate(&AppDro{}, &MessageDro{}, &AttemptDro{})
+	err = db.AutoMigrate(&AppDro{}, &CodeDro{}, &TokenDro{})
 	if err != nil {
 		return nil, err
 	}
@@ -87,5 +91,33 @@ func (dso *daoDso) DelApp(name string) error {
 	if result.Error == nil && result.RowsAffected != 1 {
 		return fmt.Errorf("row not found")
 	}
+	return result.Error
+}
+
+func (dso *daoDso) DisableCodes(app string, email string) error {
+	result := dso.db.Model(&CodeDro{}).
+		Where("app = ?", app).
+		Where("email = ?", email).
+		Where("disabled = ?", false).
+		Update("disabled", true)
+	return result.Error
+}
+
+func (dso *daoDso) DisableTokens(app string, dev string) error {
+	result := dso.db.Model(&TokenDro{}).
+		Where("app = ?", app).
+		Where("dev = ?", dev).
+		Where("disabled = ?", false).
+		Update("disabled", true)
+	return result.Error
+}
+
+func (dso *daoDso) AddCode(dro CodeDro) error {
+	result := dso.db.Create(dro)
+	return result.Error
+}
+
+func (dso *daoDso) AddToken(dro TokenDro) error {
+	result := dso.db.Create(dro)
 	return result.Error
 }

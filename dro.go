@@ -6,18 +6,21 @@ type AppDro struct {
 	Name string `gorm:"primaryKey"`
 }
 
-type MessageDro struct {
-	Mid     string `gorm:"primaryKey"`
-	From    string
-	To      string
-	Subject string
-	Mime    string
-	Body    string
-	Created time.Time
+type CodeDro struct {
+	Code     string `gorm:"index"`
+	App      string `gorm:"index:code_owner"`
+	Dev      string `gorm:"index:code_owner"`
+	Email    string `gorm:"index:code_owner"`
+	Disabled bool   `gorm:"index"`
+	Created  time.Time
+	Expires  time.Time
 }
 
-type AttemptDro struct {
-	Mid     string
-	Created time.Time
-	Result  string
+type TokenDro struct {
+	Token    string `gorm:"index"`
+	App      string `gorm:"index:token_owner"`
+	Dev      string `gorm:"index:token_owner"`
+	Email    string `gorm:"index:token_owner"`
+	Disabled bool   `gorm:"index"`
+	Created  time.Time
 }

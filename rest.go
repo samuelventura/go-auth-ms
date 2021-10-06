@@ -2,9 +2,11 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"net"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -16,14 +18,50 @@ func rest(args Args) (func(), error) {
 	router := gin.New()          //remove default logger
 	router.Use(gin.Recovery())   //looks important
 	rapi := router.Group("/api")
-	// header := func(r *http.Request, name string) (string, error) {
-	// 	key := http.CanonicalHeaderKey(name)
-	// 	values := r.Header[key]
-	// 	if len(values) != 1 {
-	// 		return "", fmt.Errorf("invalid header %s %v", key, values)
-	// 	}
-	// 	return values[0], nil
-	// }
+	header := func(r *http.Request, name string) (string, error) {
+		key := http.CanonicalHeaderKey(name)
+		values := r.Header[key]
+		if len(values) != 1 {
+			return "", fmt.Errorf("invalid header %s %v", key, values)
+		}
+		return values[0], nil
+	}
+	rapi.POST("/access", func(c *gin.Context) {
+		app, err := header(c.Request, "Auth-App")
+		if err != nil {
+			c.JSON(400, gin.H{"error": err.Error()})
+			return
+		}
+		dev, err := header(c.Request, "Auth-Dev")
+		if err != nil {
+			c.JSON(400, gin.H{"error": err.Error()})
+			return
+		}
+		email, err := header(c.Request, "Auth-Email")
+		if err != nil {
+			c.JSON(400, gin.H{"error": err.Error()})
+			return
+		}
+		_, err = dao.GetApp(app)
+		if err != nil {
+			c.JSON(400, gin.H{"error": err.Error()})
+			return
+		}
+		err = dao.DisableCodes(app, email)
+		if err != nil {
+			c.JSON(400, gin.H{"error": err.Error()})
+			return
+		}
+		dro := CodeDro{}
+		dro.Code = codegen()
+		dro.Created = time.Now()
+		dro.Expires = time.Now().Add(5 * time.Minute)
+		dro.App = app
+		dro.Dev = dev
+		dro.Email = email
+		dao.AddCode(dro)
+		c.JSON(200, gin.H{"code": dro.Code})
+	})
 	rapi.GET("/app/:name", func(c *gin.Context) {
 		name := c.Param("name")
 		dro, err := dao.GetApp(name)
