@@ -3,6 +3,8 @@ module github.com/samuelventura/go-auth-ms
 go 1.17
 
 require (
+	github.com/gin-gonic/gin v1.7.4
+	github.com/kardianos/service v1.2.0
 	gorm.io/driver/postgres v1.1.2
 	gorm.io/driver/sqlite v1.1.5
 	gorm.io/gorm v1.21.15
@@ -10,7 +12,6 @@ require (
 
 require (
 	github.com/gin-contrib/sse v0.1.0 // indirect
-	github.com/gin-gonic/gin v1.7.4 // indirect
 	github.com/go-playground/locales v0.13.0 // indirect
 	github.com/go-playground/universal-translator v0.17.0 // indirect
 	github.com/go-playground/validator/v10 v10.4.1 // indirect
