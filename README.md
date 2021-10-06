@@ -6,11 +6,13 @@ Authentication micro service
 
 ```bash
 # add app
-curl -X POST http://127.0.0.1:31650/api/app/appID
+curl -X POST http://127.0.0.1:31651/api/app/appID
+# show app
+curl -X GET http://127.0.0.1:31651/api/app/appID
 # delete app
-curl -X DELETE http://127.0.0.1:31650/api/app/appID
+curl -X DELETE http://127.0.0.1:31651/api/app/appID
 # list apps
-curl -X GET http://127.0.0.1:31650/api/app
+curl -X GET http://127.0.0.1:31651/api/app
 
 #post app+dev+email to receive email with code
 curl -X POST http://127.0.0.1:31651/api/access \
@@ -35,6 +37,23 @@ curl -X POST http://127.0.0.1:31651/api/logout \
 curl -X POST http://127.0.0.1:31651/api/logout \
   -H "Auth-App: appID" \
   -H "Auth-Email: user@domain.tld"
+```
+
+## helpers
+
+```bash
+#AUTH_LOGS=/var/log
+#AUTH_ENDPOINT=127.0.0.1:31651
+#AUTH_DB_DRIVER=sqlite|postgres
+#AUTH_DB_SOURCE=<driver dependant>
+#https://gorm.io/docs/connecting_to_the_database.html
+go install && go-auth-ms
+go install && go-auth-ss
+sqlite3 ~/go/bin/go-auth-ms.db3 ".tables"
+sqlite3 ~/go/bin/go-auth-ms.db3 ".schema app_dros"
+sqlite3 ~/go/bin/go-auth-ms.db3 "select * from app_dros"
+#for go-sqlite in linux
+sudo apt install build-essentials
 ```
 
 # security
